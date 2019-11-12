@@ -1,7 +1,44 @@
 import random
 import string
 import argparse
+import os
 from itertools import zip_longest
+
+from tensorflow import keras
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+class FashionNN:
+    def __init__(self):
+        model_file = "fashion.h5"
+        if os.path.exists(model_file):
+            self.model = keras.models.load_model('fashion.h5')
+        else:
+            self.model = self.generate_model()
+
+    def create_model(self):
+        model = keras.Sequential([
+            keras.layers.Flatten(input_shape=(28, 28)),
+            keras.layers.Dense(128, activation='relu'),
+            keras.layers.Dense(10, activation='softmax')
+        ])
+        model.compile(optimizer='adam',
+                      loss='sparse_categorical_crossentropy',
+                      metrics=['accuracy'])
+        return model
+
+    def generate_trained_model(self):
+        model = self.create_model()
+        fashion_mnist = keras.datasets.fashion_mnist
+        (train_images, train_labels), (test_images,
+                                       test_labels) = fashion_mnist.load_data()
+        model.fit(train_images, train_labels,  epochs=5)
+        model.save('fashion.h5')
+        return model
+
+    def predict(self, img):
+        return self.model.predict(img)
 
 
 class DNA:
