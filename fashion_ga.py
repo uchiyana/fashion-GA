@@ -118,6 +118,10 @@ class Population:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "-t", "--target", type=int, default=0,
+        choices=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+        help="0: t-shirt, 1: trouser, 2: pullover, 3: dress, 4: coat, 5: sandal, 6: shirt, 7: sneaker, 8: bag, 9: boot")
+    parser.add_argument(
         "-m", "--mutation", type=float, default=0.01, help="mutation rate")
     parser.add_argument(
         "-p", "--population", type=int, default=100, help="population size")
@@ -125,12 +129,13 @@ def main():
         "-g", "--generation", type=int, default=100, help="generation size")
 
     args = parser.parse_args()
+    target = args.target
     mutation_rate = args.mutation
     population_size = args.population
     generation_size = args.generation
     size = (28, 28)
 
-    population = Population(size, 0, mutation_rate, population_size)
+    population = Population(size, target, mutation_rate, population_size)
 
     for i in range(generation_size):
         population.natural_selection()
