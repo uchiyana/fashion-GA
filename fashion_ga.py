@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 
 
 class FashionNN:
-    def __init__(self):
+    def __init__(self, shape):
+        self.shape = shape
         model_file = "fashion.h5"
         if os.path.exists(model_file):
             self.model = keras.models.load_model('fashion.h5')
@@ -19,7 +20,7 @@ class FashionNN:
 
     def create_model(self):
         model = keras.Sequential([
-            keras.layers.Flatten(input_shape=(28, 28)),
+            keras.layers.Flatten(input_shape=self.shape),
             keras.layers.Dense(128, activation='relu'),
             keras.layers.Dense(10, activation='softmax')
         ])
@@ -42,41 +43,43 @@ class FashionNN:
 
 
 class DNA:
-    def __init__(self, size):
-        self.genes = random.choices(
-            string.ascii_letters + string.digits + string.whitespace, k=size)
+    def __init__(self, shape):
+        self.genes = np.random.randint(0, 255, size=shape)
 
-    def calc_fitness(self, target):
-        self.fitness = sum([(g == t)
-                            for g, t in zip_longest(self.genes, target)])
+    def calc_fitness(self, fashion_nn, type_index):
+        self.fitness = fashion_nn.predict(
+            (np.expand_dims(self.genes, 0)))[0][type_index]
 
     def mutate(self, mutation_rate):
-        for i in range(len(self.genes)):
-            if(random.random() < mutation_rate):
-                self.genes[i] = random.choice(
-                    string.ascii_letters + string.digits + string.whitespace)
+        mask = np.random.rand(*self.genes.shape) < mutation_rate
+        r = np.random.randint(0, 255, self.genes.shape)
+        self.genes[mask] = r[mask]
 
     def crossover(self, partner):
-        midpoint = random.randrange(0, len(self.genes)-1)
-        child = DNA(len(self.genes))
-        child.genes = self.genes[:midpoint] + partner.genes[midpoint:]
+        index_a = np.arange(0, self.genes.size).reshape(self.genes.shape)
+        midpoint = random.randrange(0, self.genes.size)
+        mask = index_a > midpoint
+        child = DNA(self.genes.shape)
+        child.genes = self.genes
+        child.genes[mask] = partner.genes[mask]
         return child
 
 
 class Population:
-    def __init__(self, target, mutation_rate, population_size):
-        self.target = target
+    def __init__(self, shape, type_index, mutation_rate, population_size):
         self.mutation_rate = mutation_rate
         self.population_size = population_size
-        self.population = [DNA(len(target)) for i in range(population_size)]
+        self.population = [DNA(shape) for i in range(population_size)]
         self.mating_pool = list()
+        self.fashion_nn = FashionNN(shape)
+        self.type_index = type_index
 
         self.calc_fitness()
         self.generations = 0
 
     def calc_fitness(self):
         for genes in self.population:
-            genes.calc_fitness(self.target)
+            genes.calc_fitness(self.fashion_nn, self.type_index)
 
     def natural_selection(self):
         self.mating_pool.clear()
@@ -108,15 +111,12 @@ class Population:
 
     def display_best(self):
         best_fitness, best_dna = self.get_best()
-        normalized_best_fitness = best_fitness / len(self.target)
         print(
-            f"{self.generations} fitness: {normalized_best_fitness:.2f} result: {''.join(best_dna.genes)}")
+            f"{self.generations} fitness: {best_fitness:.2f} {best_dna.genes.shape}")
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-t", "--target", default="To be or not to be", help="target string")
     parser.add_argument(
         "-m", "--mutation", type=float, default=0.01, help="mutation rate")
     parser.add_argument(
@@ -125,12 +125,12 @@ def main():
         "-g", "--generation", type=int, default=100, help="generation size")
 
     args = parser.parse_args()
-    target = args.target
     mutation_rate = args.mutation
     population_size = args.population
     generation_size = args.generation
+    size = (28, 28)
 
-    population = Population(target, mutation_rate, population_size)
+    population = Population(size, 0, mutation_rate, population_size)
 
     for i in range(generation_size):
         population.natural_selection()
