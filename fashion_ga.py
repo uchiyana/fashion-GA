@@ -1,12 +1,12 @@
+import matplotlib.pyplot as plt
+import numpy as np
+from tensorflow import keras
+from itertools import zip_longest
 import random
 import string
 import argparse
 import os
-from itertools import zip_longest
-
-from tensorflow import keras
-import numpy as np
-import matplotlib.pyplot as plt
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 
 class FashionNN:
@@ -114,6 +114,15 @@ class Population:
         print(
             f"{self.generations} fitness: {best_fitness:.2f} {best_dna.genes.shape}")
 
+    def display_best_image(self):
+        best_fitness, best_dna = self.get_best()
+        plt.close()
+        plt.figure()
+        plt.imshow(best_dna.genes)
+        plt.colorbar()
+        plt.grid(False)
+        plt.pause(0.001)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -136,12 +145,12 @@ def main():
     size = (28, 28)
 
     population = Population(size, target, mutation_rate, population_size)
-
     for i in range(generation_size):
         population.natural_selection()
         population.generate()
         population.calc_fitness()
         population.display_best()
+        population.display_best_image()
 
 
 if __name__ == "__main__":
