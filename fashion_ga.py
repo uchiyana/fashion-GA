@@ -60,7 +60,7 @@ class DNA:
         midpoint = random.randrange(0, self.genes.size)
         mask = index_a > midpoint
         child = DNA(self.genes.shape)
-        child.genes = self.genes
+        child.genes = self.genes.copy()
         child.genes[mask] = partner.genes[mask]
         return child
 
